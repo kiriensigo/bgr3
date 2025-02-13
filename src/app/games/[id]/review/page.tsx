@@ -1,9 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { FlashMessage } from "@/components/FlashMessage"
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { FlashMessage } from "@/components/FlashMessage";
+import { fetchBGGData, parseXMLResponse } from "@/lib/bggApi";
+
+interface GameDetails {
+  id: string;
+  name: string;
+  image: string;
+  bggLink: string;
+  amazonLink: string;
+  rakutenLink: string;
+}
 
 // 仮のゲームデータ（実際の実装では、APIからデータを取得します）
 const game = {
@@ -14,7 +24,7 @@ const game = {
   amazonLink: "https://www.amazon.co.jp/dp/B00005BFUU?tag=youraffiliateid-22",
   rakutenLink:
     "https://hb.afl.rakuten.co.jp/hgc/youraffiliateid/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fboardgame%2F10000001%2F",
-}
+};
 
 const mechanics = [
   "オークション",
@@ -30,7 +40,7 @@ const mechanics = [
   "デッキ/バッグビルディング",
   "トリックテイキング",
   "拡大再生産",
-]
+];
 
 const tags = [
   "子どもと大人が遊べる",
@@ -47,9 +57,11 @@ const tags = [
   "パズル",
   "レガシー（ストーリー）",
   "動物",
-]
+];
 
-export default function ReviewForm() {
+export default function ReviewForm({ params }: { params: { id: string } }) {
+  const [game, setGame] = useState<GameDetails | null>(null);
+  const [loading, setLoading] = useState(true);
   const [review, setReview] = useState({
     overallScore: 5,
     playTime: 2,
@@ -62,24 +74,107 @@ export default function ReviewForm() {
     tags: [],
     customTags: "",
     shortComment: "",
-  })
+  });
+  const [flashMessage, setFlashMessage] = useState<string | null>(null);
 
-  const [flashMessage, setFlashMessage] = useState<string | null>(null)
+  useEffect(() => {
+    async function fetchGame() {
+      try {
+        const data = await fetchBGGData(`thing?id=${params.id}`);
+        const doc = parseXMLResponse(data);
+        const item = doc.getElementsByTagName('item')[0];
+
+        if (!item) {
+          throw new Error('Game not found');
+        }
+
+        const name = item.querySelector('name[type="primary"]')?.getAttribute('value') || '';
+        
+        setGame({
+          id: params.id,
+          name: name,
+          image: item.querySelector('image')?.textContent || '/placeholder.svg',
+          bggLink: `https://boardgamegeek.com/boardgame/${params.id}`,
+          amazonLink: `https://www.amazon.co.jp/s?k=${encodeURIComponent(name)}+ボードゲーム`,
+          rakutenLink: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(name)}+ボードゲーム/`,
+        });
+      } catch (error) {
+        console.error('Error fetching game:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchGame();
+  }, [params.id]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setReview((prev) => ({
       ...prev,
       [name]:
-        type === "checkbox" ? (checked ? [...prev[name], value] : prev[name].filter((item) => item !== value)) : value,
-    }))
+        type === "checkbox"
+          ? checked
+            ? [...prev[name], value]
+            : prev[name].filter((item) => item !== value)
+          : value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameId: params.id,
+          ...review,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('レビューの投稿に失敗しました');
+      }
+
+      setFlashMessage("レビューを投稿しました！");
+      
+      // フォームをリセット
+      setReview({
+        overallScore: 5,
+        playTime: 2,
+        ruleComplexity: 3,
+        luckFactor: 3,
+        interaction: 3,
+        downtime: 3,
+        recommendedPlayers: [],
+        mechanics: [],
+        tags: [],
+        customTags: "",
+        shortComment: "",
+      });
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      setFlashMessage("エラーが発生しました。もう一度お試しください。");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Implement review submission logic
-    console.log(review)
-    setFlashMessage("レビュー完了")
+  if (!game) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <p className="text-red-500">ゲームが見つかりませんでした。</p>
+      </div>
+    );
   }
 
   return (
@@ -87,7 +182,13 @@ export default function ReviewForm() {
       {/* <Header /> */}
       <h1 className="text-3xl font-bold mb-6">{game.name}のレビュー</h1>
       <div className="flex mb-6">
-        <Image src={game.image || "/placeholder.svg"} alt={game.name} width={300} height={300} className="rounded-lg" />
+        <Image
+          src={game.image || "/placeholder.svg"}
+          alt={game.name}
+          width={300}
+          height={300}
+          className="rounded-lg"
+        />
         <div className="ml-6">
           <h2 className="text-2xl font-semibold mb-2">{game.name}</h2>
           <Link
@@ -118,7 +219,9 @@ export default function ReviewForm() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block mb-2 font-semibold">総合得点: {review.overallScore}</label>
+          <label className="block mb-2 font-semibold">
+            総合得点: {review.overallScore}
+          </label>
           <input
             type="range"
             name="overallScore"
@@ -152,7 +255,9 @@ export default function ReviewForm() {
           </div>
         </div>
         <div>
-          <label className="block mb-2 font-semibold">ルール難度: {review.ruleComplexity}</label>
+          <label className="block mb-2 font-semibold">
+            ルール難度: {review.ruleComplexity}
+          </label>
           <input
             type="range"
             name="ruleComplexity"
@@ -169,7 +274,9 @@ export default function ReviewForm() {
           </div>
         </div>
         <div>
-          <label className="block mb-2 font-semibold">運要素: {review.luckFactor}</label>
+          <label className="block mb-2 font-semibold">
+            運要素: {review.luckFactor}
+          </label>
           <input
             type="range"
             name="luckFactor"
@@ -186,7 +293,9 @@ export default function ReviewForm() {
           </div>
         </div>
         <div>
-          <label className="block mb-2 font-semibold">インタラクション: {review.interaction}</label>
+          <label className="block mb-2 font-semibold">
+            インタラクション: {review.interaction}
+          </label>
           <input
             type="range"
             name="interaction"
@@ -203,7 +312,9 @@ export default function ReviewForm() {
           </div>
         </div>
         <div>
-          <label className="block mb-2 font-semibold">ダウンタイム: {review.downtime}</label>
+          <label className="block mb-2 font-semibold">
+            ダウンタイム: {review.downtime}
+          </label>
           <input
             type="range"
             name="downtime"
@@ -295,12 +406,19 @@ export default function ReviewForm() {
             placeholder="このゲームの魅力を一言で表現してください"
           />
         </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
           レビューを投稿
         </button>
       </form>
-      {flashMessage && <FlashMessage message={flashMessage} onClose={() => setFlashMessage(null)} />}
+      {flashMessage && (
+        <FlashMessage
+          message={flashMessage}
+          onClose={() => setFlashMessage(null)}
+        />
+      )}
     </div>
-  )
+  );
 }
-
