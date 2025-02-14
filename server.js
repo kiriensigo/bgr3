@@ -1,8 +1,8 @@
 const express = require('express');
 const next = require('next');
 const mongoose = require('mongoose');
-const Game = require('./models/Game');
-const Review = require('./models/Review');
+const Game = require('./src/models/Game.js');
+const Review = require('./src/models/Review.js');
 require('dotenv').config();
 
 const dev = process.env.NODE_ENV !== 'production';

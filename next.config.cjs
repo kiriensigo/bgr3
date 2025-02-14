@@ -6,8 +6,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "cf.geekdo-images.com",
       },
+      {
+        protocol: "https",
+        hostname: "cf.geekdo-static.com",
+      },
     ],
   },
 };
 
-module.exports = nextConfig; 
+export default nextConfig;

@@ -1,6 +1,3 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { fetchBGGData, parseXMLResponse } from "@/lib/bggApi"
@@ -9,165 +6,172 @@ interface GameDetails {
   id: string
   name: string
   image: string
-  description: string
   yearPublished: string
   minPlayers: string
   maxPlayers: string
   playingTime: string
   averageRating: number
-  weight: number // ルールの複雑さ
+  weight: number
   bggLink: string
   amazonLink: string
   rakutenLink: string
 }
 
-export default function GameDetails({ params }: { params: { id: string } }) {
-  const [game, setGame] = useState<GameDetails | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface Review {
+  overallScore: number
+  playTime: number
+  ruleComplexity: number
+  luckFactor: number
+  interaction: number
+  downtime: number
+  gameId: string
+}
 
-  useEffect(() => {
-    async function fetchGame() {
-      try {
-        const data = await fetchBGGData(`thing?id=${params.id}&stats=1`)
-        const doc = parseXMLResponse(data)
-        const item = doc.getElementsByTagName('item')[0]
+interface PageProps {
+  params: {
+    id: string
+  }
+}
 
-        if (!item) {
-          throw new Error('Game not found')
-        }
+export default async function GameDetailsPage({ params }: PageProps) {
+  try {
+    // BGGデータの取得
+    const data = await fetchBGGData(`thing?id=${params.id}&stats=1`)
+    const doc = await parseXMLResponse(data)
+    const item = doc.getElementsByTagName('item')[0]
 
-        const gameDetails: GameDetails = {
-          id: item.getAttribute('id') || '',
-          name: item.querySelector('name[type="primary"]')?.getAttribute('value') || '',
-          image: item.querySelector('image')?.textContent || '/placeholder.svg',
-          description: item.querySelector('description')?.textContent?.trim() || '',
-          yearPublished: item.querySelector('yearpublished')?.getAttribute('value') || '',
-          minPlayers: item.querySelector('minplayers')?.getAttribute('value') || '',
-          maxPlayers: item.querySelector('maxplayers')?.getAttribute('value') || '',
-          playingTime: item.querySelector('playingtime')?.getAttribute('value') || '',
-          averageRating: parseFloat(
-            item.querySelector('statistics > ratings > average')?.getAttribute('value') || '0'
-          ),
-          weight: parseFloat(
-            item.querySelector('statistics > ratings > averageweight')?.getAttribute('value') || '0'
-          ),
-          bggLink: `https://boardgamegeek.com/boardgame/${params.id}`,
-          amazonLink: `https://www.amazon.co.jp/s?k=${encodeURIComponent(item.querySelector('name[type="primary"]')?.getAttribute('value') || '')}+ボードゲーム`,
-          rakutenLink: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(item.querySelector('name[type="primary"]')?.getAttribute('value') || '')}+ボードゲーム/`,
-        }
-
-        setGame(gameDetails)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '予期せぬエラーが発生しました')
-        console.error('Error fetching game details:', err)
-      } finally {
-        setLoading(false)
-      }
+    if (!item) {
+      throw new Error('Game not found')
     }
 
-    fetchGame()
-  }, [params.id])
+    // サイト内レビューの取得
+    const reviewsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/reviews`, {
+      cache: 'no-store',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-  if (loading) {
+    if (!reviewsResponse.ok) {
+      console.error('Failed to fetch reviews:', await reviewsResponse.text());
+      throw new Error('Failed to fetch reviews');
+    }
+
+    const reviews = await reviewsResponse.json();
+
+    // レビューをフィルタリングして現在のゲームのレビューのみを取得
+    const gameReviews = reviews.filter((review: Review) => review.gameId === params.id);
+
+    // レビューの平均値を計算
+    const averageReviews = gameReviews.length > 0 ? {
+      overallScore: gameReviews.reduce((acc, rev) => acc + rev.overallScore, 0) / gameReviews.length,
+      playTime: gameReviews.reduce((acc, rev) => acc + rev.playTime, 0) / gameReviews.length,
+      ruleComplexity: gameReviews.reduce((acc, rev) => acc + rev.ruleComplexity, 0) / gameReviews.length,
+      luckFactor: gameReviews.reduce((acc, rev) => acc + rev.luckFactor, 0) / gameReviews.length,
+      interaction: gameReviews.reduce((acc, rev) => acc + rev.interaction, 0) / gameReviews.length,
+      downtime: gameReviews.reduce((acc, rev) => acc + rev.downtime, 0) / gameReviews.length,
+    } : null;
+
+    const gameDetails: GameDetails = {
+      id: item.getAttribute('id') || '',
+      name: item.querySelector('name[type="primary"]')?.getAttribute('value') || '',
+      image: item.querySelector('image')?.textContent || '/placeholder.svg',
+      yearPublished: item.querySelector('yearpublished')?.getAttribute('value') || '',
+      minPlayers: item.querySelector('minplayers')?.getAttribute('value') || '',
+      maxPlayers: item.querySelector('maxplayers')?.getAttribute('value') || '',
+      playingTime: item.querySelector('playingtime')?.getAttribute('value') || '',
+      averageRating: parseFloat(
+        item.querySelector('statistics > ratings > average')?.getAttribute('value') || '0'
+      ),
+      weight: parseFloat(
+        item.querySelector('statistics > ratings > averageweight')?.getAttribute('value') || '0'
+      ),
+      bggLink: `https://boardgamegeek.com/boardgame/${params.id}`,
+      amazonLink: `https://www.amazon.co.jp/s?k=${encodeURIComponent(item.querySelector('name[type="primary"]')?.getAttribute('value') || '')}+ボードゲーム`,
+      rakutenLink: `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(item.querySelector('name[type="primary"]')?.getAttribute('value') || '')}+ボードゲーム/`,
+    }
+
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="md:flex">
+              <div className="md:w-1/3 p-4">
+                <div className="relative h-72 w-full">
+                  <Image
+                    src={gameDetails.image}
+                    alt={gameDetails.name}
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </div>
+              <div className="md:w-2/3 p-4">
+                <h1 className="text-3xl font-bold mb-4">{gameDetails.name}</h1>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-gray-600">発売年: {gameDetails.yearPublished}</p>
+                    <p className="text-gray-600">プレイ人数: {gameDetails.minPlayers}-{gameDetails.maxPlayers}人</p>
+                    <p className="text-gray-600">プレイ時間: {gameDetails.playingTime}分</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">BGG評価: {gameDetails.averageRating.toFixed(1)}</p>
+                    <p className="text-gray-600">BGG難易度: {gameDetails.weight.toFixed(1)}</p>
+                  </div>
+                </div>
 
-  if (error || !game) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <p className="text-red-500">{error || 'ゲームが見つかりませんでした'}</p>
-        <Link href="/" className="btn btn-primary mt-4">
-          ホームに戻る
-        </Link>
-      </div>
-    )
-  }
+                {averageReviews ? (
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold mb-3">サイト内レビュー平均</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-600">総合評価: {averageReviews.overallScore.toFixed(1)}</p>
+                        <p className="text-gray-600">プレイ時間の適正さ: {averageReviews.playTime.toFixed(1)}</p>
+                        <p className="text-gray-600">ルールの複雑さ: {averageReviews.ruleComplexity.toFixed(1)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">運要素: {averageReviews.luckFactor.toFixed(1)}</p>
+                        <p className="text-gray-600">プレイヤー間交流: {averageReviews.interaction.toFixed(1)}</p>
+                        <p className="text-gray-600">待ち時間: {averageReviews.downtime.toFixed(1)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-600 mb-6">まだレビューがありません</p>
+                )}
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="md:flex">
-          {/* 画像セクション */}
-          <div className="md:w-1/3">
-            <div className="relative aspect-square">
-              <Image
-                src={game.image}
-                alt={game.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
-            </div>
-          </div>
-
-          {/* 詳細情報セクション */}
-          <div className="md:w-2/3 p-6">
-            <h1 className="text-3xl font-bold mb-4">{game.name}</h1>
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <h2 className="text-gray-600">プレイ人数</h2>
-                <p>{game.minPlayers}-{game.maxPlayers}人</p>
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <Link href={gameDetails.bggLink} target="_blank" className="text-blue-600 hover:underline">
+                    BGGで見る
+                  </Link>
+                  <Link href={gameDetails.amazonLink} target="_blank" className="text-blue-600 hover:underline">
+                    Amazonで探す
+                  </Link>
+                  <Link href={gameDetails.rakutenLink} target="_blank" className="text-blue-600 hover:underline">
+                    楽天で探す
+                  </Link>
+                </div>
+                <Link 
+                  href={`/games/${gameDetails.id}/review`}
+                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  レビューを書く
+                </Link>
               </div>
-              <div>
-                <h2 className="text-gray-600">プレイ時間</h2>
-                <p>{game.playingTime}分</p>
-              </div>
-              <div>
-                <h2 className="text-gray-600">発売年</h2>
-                <p>{game.yearPublished}年</p>
-              </div>
-              <div>
-                <h2 className="text-gray-600">BGG評価</h2>
-                <p>{game.averageRating.toFixed(1)}/10</p>
-              </div>
-              <div>
-                <h2 className="text-gray-600">ルールの複雑さ</h2>
-                <p>{game.weight.toFixed(1)}/5</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <Link
-                href={game.bggLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary"
-              >
-                BGGで見る
-              </Link>
-              <Link
-                href={game.amazonLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary"
-              >
-                Amazonで見る
-              </Link>
-              <Link
-                href={game.rakutenLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary"
-              >
-                楽天で見る
-              </Link>
-              <Link
-                href={`/games/${game.id}/review`}
-                className="btn btn-primary"
-              >
-                レビューを書く
-              </Link>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  } catch (error) {
+    console.error('Error fetching game details:', error)
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-red-500">ゲーム情報の取得に失敗しました。</p>
+      </div>
+    )
+  }
 }
 

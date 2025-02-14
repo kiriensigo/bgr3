@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-export async function GET(request: Request) {
+export async function GET() {
   // TODO: Implement actual BGG API call
   const games = [
     {

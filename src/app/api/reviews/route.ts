@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     
     const review = new Review({
       gameId: data.gameId,
-      rating: data.overallScore,
+      overallScore: data.overallScore,
       playTime: data.playTime,
       ruleComplexity: data.ruleComplexity,
       luckFactor: data.luckFactor,
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       recommendedPlayers: data.recommendedPlayers,
       mechanics: data.mechanics,
       tags: [...data.tags, ...(data.customTags ? data.customTags.split(',').map(tag => tag.trim()) : [])],
-      comment: data.shortComment,
+      shortComment: data.shortComment,
       createdAt: new Date(),
     });
 
@@ -30,6 +30,25 @@ export async function POST(request: Request) {
     console.error('Error saving review:', error);
     return NextResponse.json(
       { success: false, error: 'レビューの保存に失敗しました' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    await connectDB();
+    const { searchParams } = new URL(request.url);
+    const gameId = searchParams.get('gameId');
+    
+    const query = gameId ? { gameId } : {};
+    const reviews = await Review.find(query).lean();
+    
+    return NextResponse.json(reviews);
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    return NextResponse.json(
+      { error: 'レビューの取得に失敗しました' },
       { status: 500 }
     );
   }

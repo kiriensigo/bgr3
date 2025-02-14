@@ -1,12 +1,10 @@
 import express from "express";
 import next from "next";
 import mongoose from "mongoose";
+import { Request, Response } from "express";
+import Game from "./src/models/Game";
+import Review from "./src/models/Review";
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -14,12 +12,12 @@ const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-// MongoDBの接続設定を関数として分離
+// MongoDBの接続設定
 async function connectDB() {
   try {
-    await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/boardgame-review"
-    );
+    const uri =
+      process.env.MONGODB_URI || "mongodb://localhost:27017/boardgame-review";
+    await mongoose.connect(uri);
     console.log("MongoDB connected successfully");
   } catch (err) {
     console.error("MongoDB connection error:", err);
@@ -36,12 +34,8 @@ async function startServer() {
     // MongoDBに接続
     await connectDB();
 
-    // モデルを動的にインポート
-    const { default: Game } = await import("./src/models/Game.js");
-    const { default: Review } = await import("./src/models/Review.js");
-
     // APIルートの設定
-    server.get("/api/games", async (req, res) => {
+    server.get("/api/games", async (req: Request, res: Response) => {
       try {
         const games = await Game.find({}).lean();
         res.json(games);
@@ -51,9 +45,11 @@ async function startServer() {
       }
     });
 
-    server.get("/api/reviews", async (req, res) => {
+    server.get("/api/reviews", async (req: Request, res: Response) => {
       try {
-        const reviews = await Review.find({}).lean();
+        const { gameId } = req.query;
+        const query = gameId ? { gameId: gameId } : {};
+        const reviews = await Review.find(query).lean();
         res.json(reviews);
       } catch (err) {
         console.error("Error fetching reviews:", err);
@@ -62,7 +58,7 @@ async function startServer() {
     });
 
     // Next.jsのページハンドリング
-    server.all("*", (req, res) => {
+    server.all("*", (req: Request, res: Response) => {
       return handle(req, res);
     });
 
