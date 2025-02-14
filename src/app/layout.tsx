@@ -1,31 +1,47 @@
-import "./globals.css"
-import { Inter } from "next/font/google"
-import Header from "./components/Header"
-import Footer from "./components/Footer"
-import { NextAuthProvider } from "./providers"
+import "./globals.css";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-const inter = Inter({ subsets: ["latin"] })
-
-export const metadata = {
+export const metadata: Metadata = {
   title: "ボードゲームレビュー",
-  description: "ボードゲームのレビューと情報を共有するサイト",
-}
+  description: "ボードゲームのレビューサイト",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="ja">
-      <body className={`${inter.className} flex flex-col min-h-screen bg-background text-text`}>
-        <NextAuthProvider>
-          <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
-          <Footer />
-        </NextAuthProvider>
+      <body>
+        <header className="bg-primary text-primary-foreground p-4 shadow-md">
+          <nav className="container mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold">
+              <Link href="/">ボードゲームレビュー</Link>
+            </h1>
+            <div className="space-x-4">
+              <Link href="/" className="nav-button">
+                ホーム
+              </Link>
+              <Link href="/games" className="nav-button">
+                ゲーム一覧
+              </Link>
+              <Link href="/search" className="nav-button">
+                検索
+              </Link>
+            </div>
+          </nav>
+        </header>
+
+        <main className="min-h-screen">{children}</main>
+
+        <footer className="p-4 mt-8">
+          <div className="container mx-auto text-center">
+            <p>&copy; 2024 ボードゲームレビュー. All rights reserved.</p>
+          </div>
+        </footer>
       </body>
     </html>
-  )
+  );
 }
-

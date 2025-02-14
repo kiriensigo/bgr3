@@ -398,7 +398,7 @@ export default function ReviewForm({ params }: { params: { id: string } }) {
         </div>
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="submit-button"
         >
           レビューを投稿
         </button>

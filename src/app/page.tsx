@@ -49,28 +49,21 @@ export default async function Home() {
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {games.map((game) => (
-            <Link key={game.id} href={`/games/${game.id}`} className="block">
-              <div className="border rounded-lg p-4 hover:shadow-lg transition-shadow h-full">
-                <div className="relative h-48 mb-4">
+            <Link href={`/games/${game.id}`} key={game.id}>
+              <div className="game-card">
+                <div className="relative w-full h-48">
                   <Image
                     src={game.image}
                     alt={game.name}
                     fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-contain"
-                    priority={true}
+                    style={{ objectFit: "contain" }}
                   />
                 </div>
-                <h2 className="text-xl font-semibold mb-2 line-clamp-2">
-                  {game.name}
-                </h2>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">
-                    評価: {game.averageScore.toFixed(1)}
-                  </span>
-                  <span className="text-sm text-blue-600 hover:underline">
-                    詳細を見る →
-                  </span>
+                <div className="p-4">
+                  <h2 className="text-xl font-bold mb-2">{game.name}</h2>
+                  <p className="text-gray-600">
+                    平均評価: {game.averageScore.toFixed(1)}
+                  </p>
                 </div>
               </div>
             </Link>
