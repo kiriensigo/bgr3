@@ -1,11 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
 }
 
 @layer utilities {
@@ -18,7 +18,7 @@ body {
   :root {
     --primary: 0 100% 70%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 174 84% 55%;
+    --secondary: 174 84% 45%;
     --secondary-foreground: 0 0% 100%;
     --accent: 48 100% 62%;
     --accent-foreground: 0 0% 0%;
@@ -77,18 +77,11 @@ body {
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
-  * {
-    @apply border-border;
-  }
   body {
-    @apply bg-background text-foreground font-sans;
-    background-image: url("/game-pattern.png");
-    background-repeat: repeat;
-    background-size: 200px;
+    @apply bg-background text-foreground;
   }
+
   h1,
   h2,
   h3,
@@ -99,9 +92,15 @@ body {
   }
 }
 
+@layer base {
+  * {
+    @apply border-border;
+  }
+}
+
 @layer components {
   .nav-button {
-    @apply px-4 py-2 rounded-full transition-colors font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply px-4 py-2 rounded-full font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors;
   }
 
   .submit-button {

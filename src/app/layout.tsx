@@ -17,18 +17,54 @@ export default function RootLayout({
       <body>
         <header className="bg-primary text-primary-foreground p-4 shadow-md">
           <nav className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold">
-              <Link href="/">ボードゲームレビュー</Link>
-            </h1>
+            <div className="flex items-center space-x-8">
+              <h1 className="text-2xl font-display text-primary-foreground">
+                <Link
+                  href="/"
+                  className="text-primary-foreground hover:text-accent transition-colors"
+                >
+                  ボドゲレビュー
+                </Link>
+              </h1>
+              <div className="space-x-6">
+                <Link
+                  href="/"
+                  className="hover:text-accent transition-colors duration-300"
+                >
+                  ホーム
+                </Link>
+                <Link
+                  href="/popular"
+                  className="hover:text-accent transition-colors duration-300"
+                >
+                  人気のゲーム
+                </Link>
+                <Link
+                  href="/games"
+                  className="hover:text-accent transition-colors duration-300"
+                >
+                  ゲーム一覧
+                </Link>
+                <Link
+                  href="/search"
+                  className="hover:text-accent transition-colors duration-300"
+                >
+                  検索
+                </Link>
+              </div>
+            </div>
             <div className="space-x-4">
-              <Link href="/" className="nav-button">
-                ホーム
+              <Link
+                href="/signup"
+                className="bg-secondary text-secondary-foreground px-4 py-2 rounded-full hover:bg-secondary/80 transition-colors"
+              >
+                新規登録
               </Link>
-              <Link href="/games" className="nav-button">
-                ゲーム一覧
-              </Link>
-              <Link href="/search" className="nav-button">
-                検索
+              <Link
+                href="/login"
+                className="bg-secondary text-secondary-foreground px-4 py-2 rounded-full hover:bg-secondary/80 transition-colors"
+              >
+                ログイン
               </Link>
             </div>
           </nav>

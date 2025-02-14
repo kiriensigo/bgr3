@@ -41,7 +41,7 @@ export default async function GamesPage() {
                     className="object-contain"
                   />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">{game.name}</h2>
+                <h2 className="text-xl font-noto-sans-jp font-bold mb-2">{game.name}</h2>
                 <p className="text-gray-600">
                   {game.yearPublished}年 • {game.playingTime}分 • {game.minPlayers}-{game.maxPlayers}人
                 </p>

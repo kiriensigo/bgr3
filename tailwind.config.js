@@ -2,9 +2,9 @@
 module.exports = {
   darkMode: ["class"],
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     container: {
@@ -58,6 +58,7 @@ module.exports = {
       fontFamily: {
         sans: ["Poppins", "sans-serif"],
         display: ["Fredoka One", "cursive"],
+        "noto-sans-jp": ["Noto Sans JP", "sans-serif"],
       },
       backgroundImage: {
         "game-pattern": "url('/game-pattern.png')",
@@ -70,5 +71,4 @@ module.exports = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
-
+};

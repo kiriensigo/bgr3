@@ -109,16 +109,12 @@ export default async function GameDetailsPage({ params }: PageProps) {
                 </div>
               </div>
               <div className="md:w-2/3 p-4">
-                <h1 className="text-3xl font-bold mb-4">{gameDetails.name}</h1>
+                <h1 className="text-3xl font-noto-sans-jp font-bold mb-4">{gameDetails.name}</h1>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-gray-600">発売年: {gameDetails.yearPublished}</p>
                     <p className="text-gray-600">プレイ人数: {gameDetails.minPlayers}-{gameDetails.maxPlayers}人</p>
                     <p className="text-gray-600">プレイ時間: {gameDetails.playingTime}分</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">BGG評価: {gameDetails.averageRating.toFixed(1)}</p>
-                    <p className="text-gray-600">BGG難易度: {gameDetails.weight.toFixed(1)}</p>
                   </div>
                 </div>
 
